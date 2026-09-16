@@ -12,10 +12,12 @@ The design keeps the **Core Banking System and other corporate platforms as syst
 
 | Resource | What it shows |
 |---|---|
-| **[Full Architecture Case Study](docs/full-architecture-report.md)** | Requirements, drivers, architecture, critical flows, AWS deployment, security, regulation, cost and risks |
+| **[Original PDF Report](docs/Resolucion_Ejercicio_C4_Banca_BP.pdf)** | Complete 36-page architecture report with requirements, decisions, diagrams and conclusions |
+| **[Master Editable Draw.io](diagrams/pages/Banca_BP_Arquitectura_Completa.drawio)** | Complete multi-page editable architecture source |
+| **[Full Architecture Case Study](docs/full-architecture-report.md)** | Web-friendly architecture narrative covering requirements, drivers, critical flows, AWS deployment, security, regulation, cost and risks |
 | **[Architecture Decision Matrix](docs/architecture-decisions.md)** | 18 ADRs with alternatives, rationale and trade-offs |
 | **[ASR Traceability](docs/asr-traceability.md)** | Architectural driver → pattern/tactic → design consequence → technology |
-| **[Editable Diagram Index](docs/diagram-index.md)** | 16 Draw.io views covering C4, sequences, AWS deployment and observability |
+| **[Editable Diagram Index](docs/diagram-index.md)** | 16 individual Draw.io views covering C4, sequences, AWS deployment and observability |
 | **[Open Risks & Production Preconditions](docs/open-risks.md)** | Decisions that require evidence before production |
 | **[Disclaimer](DISCLAIMER.md)** | Portfolio / non-production scope |
 
@@ -189,9 +191,13 @@ The design applies controls across multiple layers:
 
 ---
 
-## 16 editable architecture views
+## Editable architecture package
 
-The repository preserves the original architecture as individual **Draw.io-editable** files:
+The project includes both a **master multi-page Draw.io file** and **16 individual editable views**.
+
+**[Open the master Draw.io source](diagrams/pages/Banca_BP_Arquitectura_Completa.drawio)**
+
+The individual views cover:
 
 1. C4 Level 1 — System Context
 2. C4 Level 2A — Channels and Access
@@ -210,7 +216,7 @@ The repository preserves the original architecture as individual **Draw.io-edita
 15. Disaster Recovery — Warm Standby
 16. End-to-End Observability
 
-➡️ **[Open the diagram index and editable sources](docs/diagram-index.md)**
+➡️ **[Open the diagram index and individual editable sources](docs/diagram-index.md)**
 
 ---
 
