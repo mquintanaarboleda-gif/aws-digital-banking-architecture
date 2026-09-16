@@ -2,11 +2,22 @@
 
 ### Solution Architecture Case Study | AWS | C4 | ADD 3.0 | Security | Resilience | Event-Driven Integration
 
-A portfolio case study showing how I design a **secure and resilient digital-banking platform on AWS** from architectural drivers and business constraints—not from a predefined technology stack.
+A portfolio case study showing how I design a **secure and resilient digital-banking platform on AWS** from architectural drivers, quality attributes and business constraints—not from a predefined technology stack.
 
 The design keeps the **Core Banking System and other corporate platforms as systems of record** while adding a digital experience and integration layer for web/mobile channels, transactions, onboarding, notifications, audit and observability.
 
 > **Portfolio disclaimer:** this is an independent architecture exercise for professional demonstration. It is not an official, deployed or approved architecture of any financial institution. Scenario identifiers such as “BP” are retained inside the original diagrams. Production use would require formal validation of BIA/RTO/RPO, workload sizing, AWS Region, security, privacy, contracts and current regulatory requirements.
+
+## Explore the case study
+
+| Resource | What it shows |
+|---|---|
+| **[Full Architecture Case Study](docs/full-architecture-report.md)** | Requirements, drivers, architecture, critical flows, AWS deployment, security, regulation, cost and risks |
+| **[Architecture Decision Matrix](docs/architecture-decisions.md)** | 18 ADRs with alternatives, rationale and trade-offs |
+| **[ASR Traceability](docs/asr-traceability.md)** | Architectural driver → pattern/tactic → design consequence → technology |
+| **[Editable Diagram Index](docs/diagram-index.md)** | 16 Draw.io views covering C4, sequences, AWS deployment and observability |
+| **[Open Risks & Production Preconditions](docs/open-risks.md)** | Decisions that require evidence before production |
+| **[Disclaimer](DISCLAIMER.md)** | Portfolio / non-production scope |
 
 ---
 
@@ -16,7 +27,7 @@ The design keeps the **Core Banking System and other corporate platforms as syst
 - **C4 architecture** from System Context to Components
 - **Architecture Decision Records (ADRs)** with alternatives and trade-offs
 - AWS cloud architecture, hybrid connectivity and multi-account governance
-- OAuth 2.0 / OIDC, BFF, PKCE, MFA and biometric onboarding separation
+- OAuth 2.0 / OIDC, BFF, PKCE, MFA and biometric-onboarding separation
 - Transactional consistency using idempotency, durable state and **Transactional Outbox**
 - Event-driven integration using **EventBridge + SQS + DLQ**
 - Anti-Corruption Layer around legacy/core banking systems
@@ -28,38 +39,22 @@ The design keeps the **Core Banking System and other corporate platforms as syst
 
 ## Business context
 
-The target digital platform supports:
-
-- Customer/product queries and account movements
-- Transfers and payments
-- Web and mobile banking
-- OAuth 2.0 / OpenID Connect authentication
-- Biometric onboarding / KYC
-- Business audit trail
-- Independent e-mail and SMS notifications
-- High availability, DR, monitoring and auto-healing
-- Integration with Core Banking, customer-detail, IdP, KYC and payment systems
+The target digital platform supports customer/product queries, account movements, transfers and payments, web/mobile channels, OAuth/OIDC authentication, biometric onboarding/KYC, business audit, independent notification mechanisms, HA/DR, monitoring and integration with existing corporate banking systems.
 
 The architecture **does not replace the Core Banking System**. It acts as an experience, orchestration and integration layer around authoritative enterprise systems.
-
----
-
-## System context
 
 ```mermaid
 flowchart LR
     C[Customer] --> DB[Digital Banking Platform]
     OPS[Operations / Security / Audit] -. monitors .-> DB
-    DB --> IDP[Corporate IdP\nOAuth2 / OIDC / MFA]
-    DB --> CORE[Core Banking\nCustomers / Products / Balances]
+    DB --> IDP[Corporate IdP<br/>OAuth2 / OIDC / MFA]
+    DB --> CORE[Core Banking<br/>Customers / Products / Balances]
     DB --> DETAIL[Customer Detail System]
     DB --> PAY[Corporate Payment Hub]
     DB --> KYC[KYC / Biometric Provider]
-    DB --> NOTIF[Notification Providers\nE-mail / SMS]
+    DB --> NOTIF[Notification Providers<br/>E-mail / SMS]
     PAY --> BCE[Interbank Payment Rail / BCE]
 ```
-
-**Design principle:** the digital layer consumes and protects existing banking capabilities instead of exposing legacy systems directly to Internet-facing channels.
 
 ---
 
@@ -70,6 +65,7 @@ flowchart TB
     WEB[React + TypeScript SPA] --> EDGE[CloudFront + WAF]
     MOB[Flutter Mobile App] --> APIGW[Amazon API Gateway]
     EDGE --> APIGW
+
     APIGW --> BFF[Web BFF]
     APIGW --> CQ[Customer Query Service]
     APIGW --> MQ[Movement Query Service]
@@ -79,7 +75,7 @@ flowchart TB
     CQ --> REDIS[ElastiCache / Redis]
     CQ --> ACL[Integration Adapters / ACL]
     MQ --> ACL
-    TX --> AURORA[Aurora PostgreSQL\nState + Idempotency + Outbox]
+    TX --> AURORA[Aurora PostgreSQL<br/>State + Idempotency + Outbox]
     TX --> ACL
     KYC --> ACL
 
@@ -90,7 +86,7 @@ flowchart TB
     SQS2 --> AS[Audit Service]
     AS --> AUDIT[Audit DB + S3 Object Lock]
 
-    ACL --> CORE[Core / Customer Detail / Payment Hub / IdP / KYC]
+    ACL --> CORP[Core / Customer Detail / Payment Hub / IdP / KYC]
 ```
 
 ### Main technology decisions
@@ -118,7 +114,7 @@ flowchart TB
 
 ## Transaction consistency: the critical design problem
 
-A monetary operation must not be duplicated just because the network response is uncertain.
+A monetary operation must not be duplicated simply because the network response is uncertain.
 
 ```mermaid
 sequenceDiagram
@@ -144,23 +140,6 @@ sequenceDiagram
 
 If the Core/payment hub times out with an **unknown outcome**, the platform records `UNKNOWN` / `PENDING_RECONCILIATION` and reconciles using a stable business reference. It does **not** blindly repeat the monetary instruction.
 
-This is one of the central architectural decisions in the case study.
-
----
-
-## Security model
-
-The design applies controls across multiple layers:
-
-- **Identity:** OIDC/OAuth 2.0, PKCE, MFA/step-up, passkeys, least privilege
-- **Web session:** BFF pattern; `Secure`, `HttpOnly`, `SameSite` cookies; no OAuth tokens in browser localStorage
-- **API:** API Gateway, WAF, throttling, contract validation and authorization policies
-- **Network:** private workloads, security groups, hybrid connectivity and TLS
-- **Data:** KMS, Secrets Manager, minimization and encrypted backups
-- **Application:** OWASP ASVS/MASVS, SAST, SCA, DAST, secret/image scanning
-- **Detection:** GuardDuty, Security Hub, CloudTrail, AWS Config and corporate SIEM
-- **Audit:** business audit is separated from operational logs and AWS control-plane logs
-
 ---
 
 ## AWS availability and disaster recovery
@@ -168,10 +147,8 @@ The design applies controls across multiple layers:
 ```mermaid
 flowchart LR
     USERS[Customers] --> R53[Route 53 / Global Entry]
-    R53 --> PRI[Primary AWS Region\nMulti-AZ]
-    R53 -. DR failover .-> SEC[Secondary AWS Region\nWarm Standby]
 
-    subgraph PRI[Primary Region]
+    subgraph PRIMARY[Primary AWS Region - Multi-AZ]
       P1[ECS Fargate - AZ A]
       P2[ECS Fargate - AZ B]
       PA[(Aurora / Redis Multi-AZ)]
@@ -179,14 +156,17 @@ flowchart LR
       P2 --- PA
     end
 
-    subgraph SEC[Secondary Region]
+    subgraph SECONDARY[Secondary AWS Region - Warm Standby]
       S1[Reduced ECS Capacity]
       SA[(Replicated / Restorable Data)]
       S1 --- SA
     end
 
-    PRI --> DX[Redundant Private Connectivity]
-    SEC --> DX
+    R53 --> P1
+    R53 -. DR failover .-> S1
+    P1 --> DX[Redundant Private Connectivity]
+    P2 --> DX
+    S1 --> DX
     DX --> CORP[Corporate Banking Systems]
 ```
 
@@ -194,19 +174,24 @@ Warm standby is a **design hypothesis**, not a fabricated requirement. Final cap
 
 ---
 
-## Architecture decisions
+## Security model
 
-The case study documents **18 major ADRs**, including AWS platform selection, runtime, web/mobile patterns, identity, API entry, legacy integration, async messaging, transactional persistence, cache, reliable event delivery, audit, DR, connectivity, notifications, Landing Zone and IaC.
+The design applies controls across multiple layers:
 
-➡️ **[Read the full ADR matrix](docs/architecture-decisions.md)**
-
-➡️ **[Review ASR → pattern → technology traceability](docs/asr-traceability.md)**
+- **Identity:** OIDC/OAuth 2.0, PKCE, MFA/step-up, passkeys and least privilege
+- **Web session:** BFF pattern; `Secure`, `HttpOnly`, `SameSite` cookies; OAuth tokens kept out of browser localStorage
+- **API:** API Gateway, WAF, throttling, contract validation and authorization policies
+- **Network:** private workloads, security groups, hybrid connectivity and TLS
+- **Data:** KMS, Secrets Manager, minimization and encrypted backups
+- **Application:** OWASP ASVS/MASVS, SAST, SCA, DAST, secret/image scanning
+- **Detection:** GuardDuty, Security Hub, CloudTrail, AWS Config and corporate SIEM
+- **Audit:** business audit is separated from operational logs and AWS control-plane activity
 
 ---
 
-## Editable C4, sequence and deployment diagrams
+## 16 editable architecture views
 
-The original architecture contains **16 editable Draw.io views**:
+The repository preserves the original architecture as individual **Draw.io-editable** files:
 
 1. C4 Level 1 — System Context
 2. C4 Level 2A — Channels and Access
@@ -225,20 +210,7 @@ The original architecture contains **16 editable Draw.io views**:
 15. Disaster Recovery — Warm Standby
 16. End-to-End Observability
 
-➡️ **[Open the editable diagram index](docs/diagram-index.md)**
-
----
-
-## Documentation
-
-| Resource | Purpose |
-|---|---|
-| **[Full Architecture Case Study](docs/full-architecture-report.md)** | Complete portfolio narrative: requirements, drivers, architecture, flows, AWS deployment, security, regulation, cost and risks |
-| **[Architecture Decision Matrix](docs/architecture-decisions.md)** | 18 ADRs with alternatives and trade-offs |
-| **[ASR Traceability](docs/asr-traceability.md)** | Driver → pattern/tactic → design consequence → technology |
-| **[Open Risks & Production Preconditions](docs/open-risks.md)** | What must be validated before production |
-| **[Diagram Index](docs/diagram-index.md)** | 16 editable Draw.io architecture views |
-| **[Disclaimer](DISCLAIMER.md)** | Portfolio / non-production scope |
+➡️ **[Open the diagram index and editable sources](docs/diagram-index.md)**
 
 ---
 
