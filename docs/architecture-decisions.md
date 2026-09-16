@@ -1,0 +1,30 @@
+# Architecture Decision Matrix
+
+This document summarizes the architecture decisions captured in the full report. Each decision records the selected option, relevant alternatives, the main rationale, and the trade-off introduced by the choice.
+
+> These decisions belong to an architecture case study. Several choices are intentionally conditional because the source exercise does not provide all production evidence.
+
+| ADR | Decision | Selected option | Alternatives considered | Main rationale | Trade-off / condition |
+|---|---|---|---|---|---|
+| ADR-01 | Cloud platform | AWS | Azure / on-premises | Managed capabilities for HA, security and observability; available compliance evidence for the financial sector | Vendor dependency; compliance remains the bank's responsibility |
+| ADR-02 | AWS Region | Region to be validated; `us-east-1` / `us-east-2` used only as design references | `sa-east-1`, `mx-central-1`, other candidates | Enables concrete modeling without presenting the region as closed; final selection must use measured latency, service availability, cost, continuity and compliance | Architecture must be revalidated if the final region changes constraints or service availability |
+| ADR-03 | Runtime | Amazon ECS on Fargate | EKS / EC2 / Lambda | Horizontal scaling and task replacement without node administration; lower operational complexity than Kubernetes when Kubernetes is not a requirement | Less infrastructure control; unit cost may exceed EC2 for stable workloads |
+| ADR-04 | Web architecture | React + TypeScript + server-side BFF | SPA with browser-held tokens / MVC | Preserves SPA UX while keeping sensitive tokens out of browser JavaScript; strong security pattern for browser-based OAuth | Additional server-side component and network hop |
+| ADR-05 | Mobile framework | Flutter | React Native | Consistent cross-platform UI and access to native SDKs/plugins | React Native may be preferable if the organization already has a mature React/TypeScript mobile practice |
+| ADR-06 | OAuth | Authorization Code + PKCE + OIDC | Implicit / password grant | Aligns with current OAuth security practices; mobile app does not capture IdP credentials | Requires modern IdP capabilities and correct redirect/session/recovery management |
+| ADR-07 | API entry | Amazon API Gateway | Direct ALB / custom gateway | Centralized routing, throttling and API policies; lower operational burden than building a custom gateway | Per-request cost and service limits; does not replace good API-contract design |
+| ADR-08 | Legacy integration | Anti-Corruption Layer + adapters | Direct service coupling to Core | Localizes legacy protocol/model changes; improves testability and provider replacement | Adds an integration layer and small latency overhead |
+| ADR-09 | Async messaging | EventBridge + SQS + DLQ | MSK/Kafka / RabbitMQ / synchronous-only | Decouples secondary effects such as notifications and derived auditing; lower operational burden than Kafka for unspecified throughput | Does not provide Kafka's log/replay/partition model by default |
+| ADR-10 | Transactional persistence | Aurora PostgreSQL owned by Transaction Service | DynamoDB / shared database | Relational transactions fit idempotency, state and Outbox well; exclusive ownership prevents table-level coupling | Higher cost than a simple KV store; avoid unnecessary database proliferation |
+| ADR-11 | Cache | Redis + Cache-Aside | No cache / read replica / materialized view | Reduces latency and legacy-system load; TTL bounds staleness | Cache can be stale and must never be authoritative for balances or monetary execution |
+| ADR-12 | Reliable delivery | Idempotency + Transactional Outbox | Blind retries / dual DB-broker write | Prevents duplicate monetary effects; avoids the dual-write consistency gap without distributed 2PC | Requires Outbox worker, cleanup and idempotent consumers |
+| ADR-13 | Audit | Business audit DB + S3 Object Lock | CloudWatch/CloudTrail only | Banking audit requires business semantics, not just infrastructure activity; immutable archive supports evidence and retention | Storage and governance cost; requires approved legal retention/access policies |
+| ADR-14 | Disaster recovery | Warm standby as design hypothesis; validate with BIA | Backup & restore / pilot light / active-active | Better recovery posture than backup-only; avoids active-active complexity without a business requirement | Ongoing standby capacity and periodic tests; BIA may justify a different strategy |
+| ADR-15 | Hybrid connectivity | Redundant Direct Connect / Hosted Connection + VPN | Internet-only / single circuit | Reduces public-Internet dependency for Core integration; path diversity reduces single points of failure | Carrier/partner cost and risk of false physical diversity |
+| ADR-16 | Notifications | Independent e-mail + SMS; push optional | Single synchronous provider | Meets the two-mechanism requirement; adapters enable provider replacement | Notification is eventually consistent and may arrive after transaction confirmation |
+| ADR-17 | Landing Zone | AWS Organizations + Control Tower / corporate landing zone | Single account / ad-hoc landing zone | Separates production, security and evidence domains; supports segregation of duties and centralized guardrails | More accounts, policies and governance processes to operate |
+| ADR-18 | IaC and delivery | CloudFormation/CDK + CI/CD as baseline | Manual console / corporate Terraform or another IaC standard | Reproducible deployments reduce drift; supports rebuild, DR, testing and change evidence | Requires platform engineering, secure pipelines and infrastructure-code governance |
+
+## Reading the decisions
+
+The purpose of the ADR set is not to claim that every selected option is universally superior. Each decision is tied to the architectural drivers and assumptions of this specific case. In a real implementation, decisions such as AWS Region, DR tier, framework choice, connectivity model and IaC tooling must be revalidated against organizational standards and measured evidence.
