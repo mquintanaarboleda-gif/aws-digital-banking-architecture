@@ -1,6 +1,13 @@
 # Editable Architecture Diagram Index
 
-The original architecture has been preserved as **16 editable Draw.io views**. Each source file can be downloaded from GitHub or opened directly in diagrams.net.
+The project includes a **master multi-page Draw.io source** plus **16 individual editable views** for easier navigation, review and reuse.
+
+## Master architecture file
+
+- **[Download / view the complete master Draw.io](../diagrams/pages/Banca_BP_Arquitectura_Completa.drawio)**
+- **[Open the master directly in diagrams.net](https://app.diagrams.net/?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmquintanaarboleda-gif%2Faws-digital-banking-architecture%2Fmain%2Fdiagrams%2Fpages%2FBanca_BP_Arquitectura_Completa.drawio)**
+
+## Individual architecture views
 
 | # | View | Draw.io source | Open in diagrams.net |
 |---:|---|---|---|
